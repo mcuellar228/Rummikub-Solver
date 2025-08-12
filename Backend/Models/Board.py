@@ -1,5 +1,5 @@
-from Backend.Models.Tile import Tile
-from Backend.Models.TileSet import TileSet
+from Models.Tile import Tile
+from Models.TileSet import TileSet
 import copy
 from collections import defaultdict, Counter
 

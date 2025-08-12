@@ -1,7 +1,7 @@
-from Backend.Models.BoardOnlyFirstResult import Board
-from Backend.Models.Tile import Tile
+from Models.Board import Board
+from Models.Tile import Tile
 from flask import request
-from Model.src.ComputerVision.DetectAndCutTiles2 import detectTiles
+from Model.src.ComputerVision.DetectAndCutTiles import detectTiles
 
 def return_valid_board_states(tiles):
   board_tiles = []
@@ -17,5 +17,4 @@ def return_valid_board_states(tiles):
 def process_image():
   file_storage = request.files['image']
   result = detectTiles(file_storage)
-  print(result)
   return result

@@ -1,4 +1,4 @@
-from Backend.Models.Tile import Tile
+from Models.Tile import Tile
 from collections import Counter
 from typing import List
 

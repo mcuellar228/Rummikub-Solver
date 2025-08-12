@@ -201,6 +201,6 @@ def detectTiles(file_storage):
                     # padAndCropImage(contour, image, "./CroppedTiles/", i, color)
 
     # uncomment to save canny edge and contour images
-    # cv2.imwrite("closed_canny_edges.png", closed_edges)
-    # cv2.imwrite("find_contours.png", result_image)
+    cv2.imwrite("closed_canny_edges.png", closed_edges)
+    cv2.imwrite("find_contours.png", result_image)
     return tiles
