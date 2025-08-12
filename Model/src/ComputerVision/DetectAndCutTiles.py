@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from Model_1024 import make_predictions
+from Model.src.Model_1024 import make_predictions
 
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parent_dir)

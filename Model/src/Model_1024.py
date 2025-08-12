@@ -3,21 +3,27 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import time
 import os
-DIRECTORY = os.environ.get('DIRECTORY')
+from dotenv import load_dotenv
 
-os.environ['OMP_NUM_THREADS'] = '2'
+load_dotenv()
+PARENT_PATH = os.getenv('PARENT_PATH')
+training_data_file_name = "train20"
+data_parent_path = "1024_train20"
 
-data = pd.read_csv(f"{DIRECTORY}/Model/Data/TrainingData/train20.csv")
+def load_training_data():
+    data = pd.read_csv(f"{PARENT_PATH}/Model/Data/TrainingData/{training_data_file_name}.csv")
 
-data = np.array(data)
-m, n = data.shape
-np.random.shuffle(data)
+    data = np.array(data)
+    m, n = data.shape
+    np.random.shuffle(data)
 
-data_train = data[1000:m].T
-Y_train = data_train[0]
-X_train = data_train[1:n]
-X_train = X_train / 255.
-_,m_train = X_train.shape
+    data_train = data[1000:m].T
+    Y_train = data_train[0]
+    X_train = data_train[1:n]
+    X_train = X_train / 255.
+    _,m_train = X_train.shape
+
+    return X_train, Y_train
 
 def init_params():
     W1 = np.random.randn(128, 1024) * np.sqrt(1 / 1024)
@@ -31,6 +37,36 @@ def init_params():
 
     W4 = np.random.randn(14, 32) * np.sqrt(1 / 32)
     b4 = np.random.randn(14, 1) * 0.01
+
+    return W1, b1, W2, b2, W3, b3, W4, b4
+
+def load_params():
+    W1 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W1.npy")
+    b1 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b1.npy")
+
+    W2 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W2.npy")
+    b2 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b2.npy")
+
+    W3 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W3.npy")
+    b3 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b3.npy")
+
+    W4 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W4.npy")
+    b4 = np.load(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b4.npy")
+
+    return W1, b1, W2, b2, W3, b3, W4, b4
+
+def save_params():
+    W1 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W1.npy")
+    b1 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b1.npy")
+
+    W2 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W2.npy")
+    b2 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b2.npy")
+
+    W3 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W3.npy")
+    b3 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b3.npy")
+
+    W4 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/W4.npy")
+    b4 = np.save(f"{PARENT_PATH}/Model/Parameters/{data_parent_path}/b4.npy")
 
     return W1, b1, W2, b2, W3, b3, W4, b4
 
@@ -87,7 +123,6 @@ def backward_prop(Z1, A1, Z2, A2, Z3, A3, A4, W2, W3, W4, X, Y):
 
     return dW1, db1, dW2, db2, dW3, db3, dW4, db4
 
-
 def update_params(W1, b1, W2, b2, W3, b3, W4, b4, dW1, db1, dW2, db2, dW3, db3, dW4, db4, alpha):
     W1 -= alpha * dW1
     b1 -= alpha * db1
@@ -106,31 +141,37 @@ def get_accuracy(predictions, Y):
     print(predictions, Y)
     return np.sum(predictions == Y) / Y.size
 
-def gradient_descent(X, Y, alpha, iterations):
-    W1, b1, W2, b2, W3, b3, W4, b4 = init_params()
+def gradient_descent(X, Y, alpha, iterations, use_existing_params=False):
+    if use_existing_params:
+        W1, b1, W2, b2, W3, b3, W4, b4 = load_params()
+    else:
+        W1, b1, W2, b2, W3, b3, W4, b4 = init_params()
     for i in range(iterations):
         Z1, A1, Z2, A2, Z3, A3, Z4, A4 = forward_prop(W1, b1, W2, b2, W3, b3, W4, b4, X)
         dW1, db1, dW2, db2, dW3, db3, dW4, db4 = backward_prop(Z1, A1, Z2, A2, Z3, A3, A4, W2, W3, W4, X, Y)
         W1, b1, W2, b2, W3, b3, W4, b4 = update_params(W1, b1, W2, b2, W3, b3, W4, b4,
                                                        dW1, db1, dW2, db2, dW3, db3, dW4, db4, alpha)
-        time.sleep(0.05)
         if i % 50 == 0:
             predictions = get_predictions(A4)
             print(f"Iteration {i} - Accuracy: {get_accuracy(predictions, Y):.4f}")
-    return W1, b1, W2, b2, W3, b3, W4, b4
 
-W1, b1, W2, b2, W3, b3, W4, b4 = gradient_descent(X_train, Y_train, 0.01, 2000)
+    save_params()
 
-def make_predictions(X, W1=W1, b1=b1, W2=W2, b2=b2, W3=W3, b3=b3, W4=W4, b4=b4):
+    # uncomment below to see predictions
+    # for i in range (30):
+    #     test_prediction(i, W1, b1, W2, b2, W3, b3, W4, b4)
+
+def make_predictions(X):
+    W1, b1, W2, b2, W3, b3, W4, b4 = load_params()
     _, _, _, _, _, _, _, A4 = forward_prop(W1, b1, W2, b2, W3, b3, W4, b4, X)
     predictions = get_predictions(A4)
     return predictions, A4
 
 def test_prediction(index, W1, b1, W2, b2, W3, b3, W4, b4):
+    X_train, Y_train = load_training_data()
     current_image = X_train[:, index, None]
     prediction = make_predictions(X_train[:, index, None], W1, b1, W2, b2, W3, b3, W4, b4)
     label = Y_train[index]
-    # if label in [6, 13]:
     print("Prediction: ", prediction)
     print("Label: ", label)
 
@@ -138,16 +179,3 @@ def test_prediction(index, W1, b1, W2, b2, W3, b3, W4, b4):
     plt.gray()
     plt.imshow(current_image, interpolation='nearest')
     plt.show()
-
-np.save('W1.npy', W1)
-np.save('b1.npy', b1)
-np.save('W2.npy', W2)
-np.save('b2.npy', b2)
-np.save('W3.npy', W3)
-np.save('b3.npy', b3)
-np.save('W4.npy', W4)
-np.save('b4.npy', b4)
-
-# uncomment below to see predictions
-# for i in range (30):
-#     test_prediction(i, W1, b1, W2, b2, W3, b3, W4, b4)
